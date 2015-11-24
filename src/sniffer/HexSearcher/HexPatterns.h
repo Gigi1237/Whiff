@@ -217,10 +217,21 @@ namespace HexPatterns
 
     namespace Legion
     {
+        //static const std::vector<unsigned char> NetClient_HandleData() { return{ 0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x18, 0x56, 0x8B, 0xF1, 0xE8, 0x00, 0x00, 0x00, 0x00, 0xA1, 0xB8 }; }
+
+        static const std::vector<unsigned char> NetClient_Send2() { return{ 0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x0C, 0x53, 0x56, 0x57, 0x8B, 0xF9, 0x8D, 0x87, 0x34, 0x05, 0x00 }; }
+
+        static const std::vector<unsigned char> NetClient_ProcessMessage() { return{ 0x55, 0x8B, 0xEC, 0x51, 0xFF, 0x05, 0x00, 0x00, 0x00, 0x00, 0x8D, 0x45, 0xFC }; }
+        
         void Find(Addresses* addresses)
         {
-            if (GetExpansion(sSniffer->GetBuild()) != EXPANSION_LEGION)
-                return;
+            HexFindResult send2(sHexSearcher->FindOffsets(NetClient_Send2(), 0, addresses->NetClient_Send2, "NetClient::Send2"));
+            if (send2.Err == ERR_OK)
+                printf("Found %s at 0x%X\n", send2.Name, addresses->NetClient_Send2);
+
+            HexFindResult processMessage(sHexSearcher->FindOffsets(NetClient_ProcessMessage(), 0, addresses->NetClient_ProcessMessage, "NetClient::ProcessMessage"));
+            if (processMessage.Err == ERR_OK)
+                printf("Found %s at 0x%X\n", processMessage.Name, addresses->NetClient_ProcessMessage);
         }
     }
 

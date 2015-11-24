@@ -8,7 +8,7 @@
 #include <string>
 #include "Addresses.h"
 
-#define WOW_PROCESSES 8
+#define WOW_PROCESSES 10
 
 struct BasicAppInfo
 {
@@ -25,6 +25,8 @@ static BasicAppInfo WoWProcesses[WOW_PROCESSES] = {
     { false, "wow_patched.exe"     },
     { false, "wowt.exe"            },
     { false, "wowt_patched.exe"    },
+    { false, "wowb.exe"    },
+    { false, "wowb_patched.exe"    }
 };
 
 // this DLL will be injected

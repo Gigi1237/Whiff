@@ -355,9 +355,39 @@ namespace Trampolines
 
     namespace Legion
     {
-        bool Init() { return true; }
+        int __fastcall NetClient_ProcessMessage(void* thisPTR, void* dummy, void* param1, void* param2, CDataStore* dataStore, void* connectionId)
+        {
+            recvmtx.lock();
+            PacketInfo packetInfo(SMSG, (int)connectionId, 4, dataStore);
+            sSniffer->DumpPacket(packetInfo);
+            int retCode = sDetourMgr->GetDetour<decltype(&NetClient_ProcessMessage)>(HOOK_PROCESSMESSAGE)->GetOriginalFunction()(thisPTR, dummy, param1, param2, dataStore, connectionId);
+            recvmtx.unlock();
+            return retCode;
+        }
+
+        bool InitProcessMessage()
+        {
+            ClientAddresses::Addresses const* addresses = sSniffer->GetAddresses();
+            if (!sDetourMgr->CreateDetour<decltype(&NetClient_ProcessMessage)>(HOOK_PROCESSMESSAGE, addresses->NetClient_ProcessMessage, &NetClient_ProcessMessage))
+                return false;
+
+            return true;
+        }
+
+        bool InitSend2() { return Vanilla::InitSend2(); }
 
         std::string GetLocale() { return std::string(); }
+
+        bool Init()
+        {
+            if (!InitProcessMessage())
+                return false;
+
+            if (!InitSend2())
+                return false;
+
+            return true;
+        }
     }
 
     std::string GetLocale()

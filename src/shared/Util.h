@@ -102,6 +102,10 @@ enum Expansions
 
 static Expansions GetExpansion(DWORD build)
 {
+    // 7.0.1
+    if (build >= 20740)
+        return EXPANSION_LEGION;
+
     // 6.0.2
     if (build >= 19033)
         return EXPANSION_WOD;
