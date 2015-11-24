@@ -90,14 +90,33 @@ void Sniffer::DumpPacket(PacketInfo const& info)
         fflush(m_fileDump);
     }
 
-    BYTE* packetData     = info.dataStore->buffer + info.opcodeSize;
-    DWORD packetDataSize = info.dataStore->size   - info.opcodeSize;
+    BYTE* packetData = info.dataStore->buffer + info.opcodeSize;
+    DWORD packetDataSize = info.dataStore->size - info.opcodeSize;
+    DWORD packetSize = info.dataStore->size;
+
+    if (GetExpansion(sSniffer->GetBuild()) == EXPANSION_LEGION)
+    {
+        if (info.packetType == CMSG)
+        {
+            packetData += 4;
+            packetDataSize -= 4;
+
+            packetOpcode = info.opcodeSize == 4
+                ? *(DWORD*)(info.dataStore->buffer + 4)
+                : *(WORD*)(info.dataStore->buffer + 4);
+
+            packetSize -= info.opcodeSize;
+        }
+        else if (info.opcodeSize == 2)
+            packetSize += 2;
+            
+    }
 
     fwrite((DWORD*)&info.packetType,            4, 1, m_fileDump);  // direction of the packet
     fwrite((DWORD*)&info.connectionId,          4, 1, m_fileDump);  // connection id
     fwrite((DWORD*)&tickCount,                  4, 1, m_fileDump);  // timestamp of the packet
     fwrite((DWORD*)&optionalHeaderLength,       4, 1, m_fileDump);  // connection id
-    fwrite((DWORD*)&info.dataStore->size,       4, 1, m_fileDump);  // size of the packet + opcode lenght
+    fwrite((DWORD*)&packetSize,                 4, 1, m_fileDump);  // size of the packet + opcode lenght
     fwrite((DWORD*)&packetOpcode,               4, 1, m_fileDump);  // opcode
 
     fwrite(packetData, packetDataSize,          1, m_fileDump);  // data

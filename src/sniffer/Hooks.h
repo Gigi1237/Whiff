@@ -358,10 +358,20 @@ namespace Trampolines
         int __fastcall NetClient_ProcessMessage(void* thisPTR, void* dummy, void* param1, void* param2, CDataStore* dataStore, void* connectionId)
         {
             recvmtx.lock();
-            PacketInfo packetInfo(SMSG, (int)connectionId, 4, dataStore);
+            PacketInfo packetInfo(SMSG, (int)connectionId, 2, dataStore);
             sSniffer->DumpPacket(packetInfo);
             int retCode = sDetourMgr->GetDetour<decltype(&NetClient_ProcessMessage)>(HOOK_PROCESSMESSAGE)->GetOriginalFunction()(thisPTR, dummy, param1, param2, dataStore, connectionId);
             recvmtx.unlock();
+            return retCode;
+        }
+
+        int __fastcall NetClient_Send2(void* thisPTR, void* dummy, CDataStore* dataStore, int connectionId)
+        {
+            sendmtx.lock();
+            PacketInfo packetInfo(CMSG, connectionId, 2, dataStore);
+            sSniffer->DumpPacket(packetInfo);
+            int retCode = sDetourMgr->GetDetour<decltype(&NetClient_Send2)>(HOOK_SEND2)->GetOriginalFunction()(thisPTR, dummy, dataStore, connectionId);
+            sendmtx.unlock();
             return retCode;
         }
 
@@ -374,7 +384,11 @@ namespace Trampolines
             return true;
         }
 
-        bool InitSend2() { return Vanilla::InitSend2(); }
+        bool InitSend2()
+        {
+            ClientAddresses::Addresses const* addresses = sSniffer->GetAddresses();
+            return sDetourMgr->CreateDetour<decltype(&NetClient_Send2)>(HOOK_SEND2, addresses->NetClient_Send2, &NetClient_Send2);
+        }
 
         std::string GetLocale() { return std::string(); }
 
